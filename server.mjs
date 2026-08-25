@@ -27,6 +27,7 @@ const runtime = {
   pairingPromise: null,
   pairingRequested: false,
   reconnectTimer: null,
+  registered: false,
   lastError: null,
   connectedAt: null,
   startedAt: new Date().toISOString(),
@@ -126,6 +127,7 @@ async function startSocket() {
   if (runtime.socket) return runtime.socket;
   await mkdir(AUTH_DIR, { recursive: true });
   const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
+  runtime.registered = Boolean(state.creds.registered);
   const socket = makeWASocket({
     auth: state,
     browser: Browsers.ubuntu("Chrome"),
@@ -146,16 +148,20 @@ async function startSocket() {
     if (connection === "open") {
       runtime.status = "online";
       runtime.connectedAt = new Date().toISOString();
+      runtime.registered = true;
       await sendEvent("bot.status", { status: "online" });
     }
     if (connection === "close") {
       runtime.status = "offline";
-      runtime.socket = null;
+      if (runtime.socket === socket) runtime.socket = null;
       runtime.pairingRequested = false;
       const code = lastDisconnect?.error?.output?.statusCode;
       runtime.lastError = code ? `WhatsApp disconnected with status ${code}.` : "WhatsApp connection closed.";
       await sendEvent("bot.status", { status: "offline", reason: runtime.lastError });
-      if (code === DisconnectReason.loggedOut) runtime.pairingCode = null;
+      if (code === DisconnectReason.loggedOut) {
+        runtime.pairingCode = null;
+        runtime.registered = false;
+      }
       if (code === DisconnectReason.restartRequired && !runtime.reconnectTimer) {
         runtime.status = "reconnecting";
         runtime.reconnectTimer = setTimeout(async () => {
@@ -202,8 +208,17 @@ async function startSocket() {
 
 async function getPairingCode(phone) {
   runtime.phone = normalizePhone(phone);
-  if (runtime.pairingCode && runtime.status !== "online") return runtime.pairingCode;
+  if (runtime.status === "online" || runtime.registered) {
+    throw new Error("This WhatsApp account is already paired. Use the connected bot instead of requesting another code.");
+  }
   if (runtime.pairingPromise) return runtime.pairingPromise.promise;
+  runtime.pairingCode = null;
+  if (runtime.socket) {
+    const previousSocket = runtime.socket;
+    runtime.socket = null;
+    try { previousSocket.end(new Error("Restarting pairing session")); } catch { }
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
   let resolve;
   let reject;
   const promise = new Promise((res, rej) => { resolve = res; reject = rej; });

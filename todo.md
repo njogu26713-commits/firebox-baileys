@@ -32,3 +32,6 @@
 - [x] Test standalone commands alongside pairing, reconnect, and Hub events, then push the independent bot.
 
 - [x] Process prefixed commands sent from the paired account’s own chat while preventing ordinary self-message loops.
+
+- [x] Diagnose the recurring pairing-code timeout after the standalone command integration.
+- [x] Stabilize initial pairing versus post-pairing reconnect state and verify command handling remains active.
