@@ -5,9 +5,17 @@
    "description": "Firebox-maintained fork of Baileys, a WebSockets library for interacting with WhatsApp Web",
    "license": "MIT",
    "author": "Rajeh Taher",
-   "maintainers": [{ "name": "Firebox" }],
+   "maintainers": [
+      {
+         "name": "Firebox"
+      }
+   ],
    "repository": "github:njogu26713-commits/firebox-baileys",
    "main": "lib/index.js",
+   "scripts": {
+      "start": "node server.mjs",
+      "test": "node --test test/*.test.mjs"
+   },
    "files": [
       "lib/**/*",
       "WAProto/**/*",

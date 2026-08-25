@@ -1323,3 +1323,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 Thus, the maintainers of the project can't be held liable for any potential misuse of this project.
+
+
+## Firebox Bot Service Deployment
+
+This repository remains a usable Firebox Baileys library through `lib/index.js`, and it can also run as a Railway-hosted bot service through `server.mjs`. Railway starts the service with `yarn start`, which binds to Railway’s injected `PORT` on `0.0.0.0`.
+
+Set the following variables on the Railway service:
+
+| Variable | Purpose |
+| --- | --- |
+| `FIREBOX_HUB_URL` | HTTPS base URL of the deployed Firebox Webhook Hub, without a trailing slash. |
+| `FIREBOX_BOT_ID` | Bot ID issued by the Webhook Hub. |
+| `FIREBOX_BOT_KEY` | Private key issued by the Webhook Hub and also stored by the Firebox panel for this server. |
+| `FIREBOX_PUBLIC_URL` | The public Railway URL of this service, used when the service registers with the Hub. |
+| `FIREBOX_BOT_NAME` | Display name shown in the panel. |
+| `FIREBOX_AUTH_DIR` | Optional persistent auth directory; defaults to `./auth_info`. Use a Railway Volume for WhatsApp credentials. |
+
+The public health endpoint is `GET /health`. The Firebox panel calls `GET /api/bot/status` and `POST /api/bot/pair-code` with the `X-Firebox-Panel-Key` header. The service rejects those protected requests when the header does not match `FIREBOX_BOT_KEY`. The `/health` endpoint stays public so Railway can use it for diagnostics.
+
+For WhatsApp credentials to survive restarts, attach a Railway Volume and set `FIREBOX_AUTH_DIR` to its mounted path. Without persistent storage, the service may require pairing again after a redeploy or restart.
