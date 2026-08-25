@@ -23,3 +23,10 @@
 - [x] Diagnose the post-pairing `logging in...` state and any subsequent disconnect or failure.
 
 - [x] Handle WhatsApp code 515 (`restart required`) by reconnecting with the newly saved credentials.
+
+- [x] Integrate a command runtime so WhatsApp messages such as `.menu` receive replies.
+
+- [x] Add an independent command loader and message handler to firebox-baileys without importing firebox-bot.
+- [x] Add a standalone `.menu` and requested command catalog with safe capability boundaries.
+- [x] Add opt-in channel/group link commands and wire command handling to incoming WhatsApp messages.
+- [x] Test standalone commands alongside pairing, reconnect, and Hub events, then push the independent bot.

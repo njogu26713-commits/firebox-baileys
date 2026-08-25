@@ -2,6 +2,7 @@ import http from "node:http";
 import { randomUUID } from "node:crypto";
 import { mkdir } from "node:fs/promises";
 import pino from "pino";
+import { handleCommand } from "./commands.mjs";
 import makeWASocket, {
   Browsers,
   DisconnectReason,
@@ -15,6 +16,7 @@ const BOT_ID = String(process.env.FIREBOX_BOT_ID || "");
 const BOT_NAME = process.env.FIREBOX_BOT_NAME || BOT_ID || "Firebox Bot";
 const WORKSPACE_URL = process.env.FIREBOX_PUBLIC_URL || process.env.PUBLIC_URL || "";
 const AUTH_DIR = process.env.FIREBOX_AUTH_DIR || "./auth_info";
+const COMMAND_PREFIX = process.env.FIREBOX_COMMAND_PREFIX || ".";
 const logger = pino({ level: process.env.LOG_LEVEL || "info" });
 
 const runtime = {
@@ -169,6 +171,24 @@ async function startSocket() {
     }
   });
   socket.ev.on("messages.upsert", async ({ messages, type }) => {
+    if (type === "notify" && Array.isArray(messages)) {
+      for (const message of messages) {
+        if (!message?.message || message.key?.fromMe) continue;
+        try {
+          await handleCommand({
+            sock,
+            jid: message.key.remoteJid,
+            message: message.message,
+            botName: BOT_NAME,
+            prefix: COMMAND_PREFIX,
+            status: runtime.status,
+          });
+        } catch (error) {
+          runtime.lastError = error.message;
+          logger.warn({ err: error }, "Standalone command failed");
+        }
+      }
+    }
     await sendEvent("message.received", {
       type,
       count: Array.isArray(messages) ? messages.length : 0,
@@ -226,6 +246,7 @@ async function handle(req, res) {
       phone: runtime.phone,
       botId: BOT_ID || null,
       botName: BOT_NAME,
+      commandPrefix: COMMAND_PREFIX,
       lastError: runtime.lastError,
       connectedAt: runtime.connectedAt,
       startedAt: runtime.startedAt,
