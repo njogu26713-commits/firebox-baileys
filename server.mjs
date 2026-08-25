@@ -23,6 +23,7 @@ const runtime = {
   phone: null,
   pairingCode: null,
   pairingPromise: null,
+  pairingRequested: false,
   lastError: null,
   connectedAt: null,
   startedAt: new Date().toISOString(),
@@ -120,25 +121,29 @@ async function startSocket() {
   runtime.lastError = null;
   socket.ev.on("creds.update", saveCreds);
   socket.ev.on("connection.update", async (update) => {
-    const { connection, lastDisconnect, qr } = update;
-    if (qr && runtime.phone && !runtime.pairingCode) {
-      try {
-        const code = await socket.requestPairingCode(runtime.phone);
-        resolvePairing(code);
-        await sendEvent("bot.pairing_code", { phone: runtime.phone, code });
-      } catch (error) {
-        runtime.lastError = error.message;
-        rejectPairing(error);
-      }
-    }
+    const { connection, lastDisconnect } = update;
     if (connection === "open") {
       runtime.status = "online";
       runtime.connectedAt = new Date().toISOString();
       await sendEvent("bot.status", { status: "online" });
+      if (runtime.phone && runtime.pairingPromise && !runtime.pairingCode && !runtime.pairingRequested) {
+        runtime.pairingRequested = true;
+        try {
+          const code = await socket.requestPairingCode(runtime.phone);
+          resolvePairing(code);
+          await sendEvent("bot.pairing_code", { phone: runtime.phone, code });
+        } catch (error) {
+          runtime.lastError = error.message;
+          rejectPairing(error);
+        } finally {
+          runtime.pairingRequested = false;
+        }
+      }
     }
     if (connection === "close") {
       runtime.status = "offline";
       runtime.socket = null;
+      runtime.pairingRequested = false;
       const code = lastDisconnect?.error?.output?.statusCode;
       runtime.lastError = code ? `WhatsApp disconnected with status ${code}.` : "WhatsApp connection closed.";
       await sendEvent("bot.status", { status: "offline", reason: runtime.lastError });
