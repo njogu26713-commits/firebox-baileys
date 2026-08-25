@@ -1,6 +1,10 @@
 <h1 align='center'><img alt="Baileys logo" src="https://raw.githubusercontent.com/WhiskeySockets/Baileys/refs/heads/master/Media/logo.png" height="75"/></h1>
 
-<div align='center'>Baileys is a WebSockets-based TypeScript library for interacting with the WhatsApp Web API.</div>
+# Firebox Baileys
+
+<div align='center'>A Firebox-maintained fork of Baileys, a WebSockets-based TypeScript library for interacting with the WhatsApp Web API.</div>
+
+> This repository is maintained by Firebox and is based on the Baileys project by its original authors and contributors. The original MIT license, copyright, attribution, and WhatsApp disclaimer remain applicable.
 
 
 > [!CAUTION]
@@ -11,7 +15,7 @@
 > Please check out https://whiskey.so/migrate-latest for more information.
 
 # Important Note
-This is a temporary README.md, the new guide is in development and will this file will be replaced with .github/README.md (already a default on GitHub).
+This fork keeps the upstream Baileys guide while adding Firebox-specific packaging and maintenance information. The original documentation and upstream project identity are retained for compatibility and attribution.
 
 New guide link: https://baileys.wiki
 
@@ -48,7 +52,7 @@ This is the only official repository and is maintained by the community.
 Do check out & run [example.ts](Example/example.ts) to see an example usage of the library.
 The script covers most common use cases.
 To run the example script, download or clone the repo and then type the following in a terminal:
-1. ``` cd path/to/Baileys ```
+1. ``` cd path/to/firebox-baileys ```
 2. ``` yarn ```
 3. ``` yarn example ```
 
@@ -59,9 +63,18 @@ Use the stable version:
 yarn add @whiskeysockets/baileys
 ```
 
-Use the edge version (no guarantee of stability, but latest fixes + features)
+Use the Firebox fork directly from GitHub:
 ```
-yarn add github:WhiskeySockets/Baileys
+yarn add github:njogu26713-commits/firebox-baileys
+```
+
+For an existing Firebox Bot installation that already imports `@whiskeysockets/baileys`, use a package alias in `package.json`:
+```json
+{
+  "dependencies": {
+    "@whiskeysockets/baileys": "github:njogu26713-commits/firebox-baileys"
+  }
+}
 ```
 
 Then import your code using:

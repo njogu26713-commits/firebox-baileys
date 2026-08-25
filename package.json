@@ -1,10 +1,12 @@
 {
-   "name": "baileys",
+   "name": "firebox-baileys",
    "type": "module",
-   "version": "7.0.0-rc14",
-   "description": "A WebSockets library for interacting with WhatsApp Web",
+   "version": "7.0.0-rc14-firebox.1",
+   "description": "Firebox-maintained fork of Baileys, a WebSockets library for interacting with WhatsApp Web",
    "license": "MIT",
    "author": "Rajeh Taher",
+   "maintainers": [{ "name": "Firebox" }],
+   "repository": "github:njogu26713-commits/firebox-baileys",
    "main": "lib/index.js",
    "files": [
       "lib/**/*",
