@@ -24,6 +24,7 @@ const runtime = {
   pairingCode: null,
   pairingPromise: null,
   pairingRequested: false,
+  reconnectTimer: null,
   lastError: null,
   connectedAt: null,
   startedAt: new Date().toISOString(),
@@ -153,6 +154,18 @@ async function startSocket() {
       runtime.lastError = code ? `WhatsApp disconnected with status ${code}.` : "WhatsApp connection closed.";
       await sendEvent("bot.status", { status: "offline", reason: runtime.lastError });
       if (code === DisconnectReason.loggedOut) runtime.pairingCode = null;
+      if (code === DisconnectReason.restartRequired && !runtime.reconnectTimer) {
+        runtime.status = "reconnecting";
+        runtime.reconnectTimer = setTimeout(async () => {
+          runtime.reconnectTimer = null;
+          try {
+            await startSocket();
+          } catch (error) {
+            runtime.lastError = error.message;
+            logger.error({ err: error }, "Post-pairing reconnect failed");
+          }
+        }, 1000);
+      }
     }
   });
   socket.ev.on("messages.upsert", async ({ messages, type }) => {

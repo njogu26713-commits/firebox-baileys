@@ -18,6 +18,8 @@
 - [x] Resolve the `Invalid or disabled bot key` Hub configuration mismatch and improve its diagnostics.
 - [x] Add pairing-lifecycle regression coverage and push the repair.
 
-- [ ] Fix the new pairing-code timeout caused by waiting for the wrong socket lifecycle event.
+- [x] Fix the new pairing-code timeout caused by waiting for the wrong socket lifecycle event.
 
-- [ ] Diagnose the post-pairing `logging in...` state and any subsequent disconnect or failure.
+- [x] Diagnose the post-pairing `logging in...` state and any subsequent disconnect or failure.
+
+- [x] Handle WhatsApp code 515 (`restart required`) by reconnecting with the newly saved credentials.
