@@ -107,21 +107,12 @@ function rejectPairing(error) {
 async function requestPairingWhenReady(socket) {
   if (runtime.pairingRequested || runtime.pairingCode || !runtime.phone) return;
   runtime.pairingRequested = true;
-  const deadline = Date.now() + 20000;
-  let lastError;
   try {
-    while (Date.now() < deadline && runtime.socket === socket) {
-      try {
-        const code = await socket.requestPairingCode(runtime.phone);
-        resolvePairing(code);
-        await sendEvent("bot.pairing_code", { phone: runtime.phone, code });
-        return;
-      } catch (error) {
-        lastError = error;
-        await new Promise((resolve) => setTimeout(resolve, 250));
-      }
-    }
-    throw lastError || new Error("Timed out waiting for the WhatsApp WebSocket to become ready.");
+    await socket.waitForSocketOpen();
+    if (runtime.socket !== socket || !runtime.pairingPromise) return;
+    const code = await socket.requestPairingCode(runtime.phone);
+    resolvePairing(code);
+    await sendEvent("bot.pairing_code", { phone: runtime.phone, code });
   } catch (error) {
     runtime.lastError = error.message;
     rejectPairing(error);
