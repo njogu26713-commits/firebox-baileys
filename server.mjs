@@ -2,7 +2,7 @@ import http from "node:http";
 import { randomUUID } from "node:crypto";
 import { mkdir } from "node:fs/promises";
 import pino from "pino";
-import { handleCommand } from "./commands.mjs";
+import { handleCommand, parseCommand } from "./commands.mjs";
 import makeWASocket, {
   Browsers,
   DisconnectReason,
@@ -173,7 +173,9 @@ async function startSocket() {
   socket.ev.on("messages.upsert", async ({ messages, type }) => {
     if (type === "notify" && Array.isArray(messages)) {
       for (const message of messages) {
-        if (!message?.message || message.key?.fromMe) continue;
+        if (!message?.message) continue;
+        const isCommand = Boolean(parseCommand(message.message, COMMAND_PREFIX));
+        if (message.key?.fromMe && !isCommand) continue;
         try {
           await handleCommand({
             sock,

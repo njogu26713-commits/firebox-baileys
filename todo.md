@@ -30,3 +30,5 @@
 - [x] Add a standalone `.menu` and requested command catalog with safe capability boundaries.
 - [x] Add opt-in channel/group link commands and wire command handling to incoming WhatsApp messages.
 - [x] Test standalone commands alongside pairing, reconnect, and Hub events, then push the independent bot.
+
+- [x] Process prefixed commands sent from the paired account’s own chat while preventing ordinary self-message loops.
