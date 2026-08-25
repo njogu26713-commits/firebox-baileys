@@ -35,3 +35,5 @@
 
 - [x] Diagnose the recurring pairing-code timeout after the standalone command integration.
 - [x] Stabilize initial pairing versus post-pairing reconnect state and verify command handling remains active.
+
+- [x] Fix standalone message listening and command dispatch after the WhatsApp reconnect.

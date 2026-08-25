@@ -177,29 +177,31 @@ async function startSocket() {
     }
   });
   socket.ev.on("messages.upsert", async ({ messages, type }) => {
-    if (type === "notify" && Array.isArray(messages)) {
-      for (const message of messages) {
-        if (!message?.message) continue;
-        const isCommand = Boolean(parseCommand(message.message, COMMAND_PREFIX));
-        if (message.key?.fromMe && !isCommand) continue;
-        try {
-          await handleCommand({
-            sock,
-            jid: message.key.remoteJid,
-            message: message.message,
-            botName: BOT_NAME,
-            prefix: COMMAND_PREFIX,
-            status: runtime.status,
-          });
-        } catch (error) {
-          runtime.lastError = error.message;
-          logger.warn({ err: error }, "Standalone command failed");
-        }
+    const batch = Array.isArray(messages) ? messages : [];
+    logger.debug({ type, count: batch.length }, "WhatsApp messages received");
+    for (const message of batch) {
+      if (!message?.message || !message.key?.remoteJid) continue;
+      const parsed = parseCommand(message.message, COMMAND_PREFIX);
+      if (message.key?.fromMe && !parsed) continue;
+      if (!parsed) continue;
+      logger.info({ type, command: parsed.name, jid: message.key.remoteJid }, "Standalone command received");
+      try {
+        await handleCommand({
+          sock,
+          jid: message.key.remoteJid,
+          message: message.message,
+          botName: BOT_NAME,
+          prefix: COMMAND_PREFIX,
+          status: runtime.status,
+        });
+      } catch (error) {
+        runtime.lastError = error.message;
+        logger.warn({ err: error }, "Standalone command failed");
       }
     }
-    await sendEvent("message.received", {
+    void sendEvent("message.received", {
       type,
-      count: Array.isArray(messages) ? messages.length : 0,
+      count: batch.length,
       connected: runtime.status === "online",
     });
   });
