@@ -19,3 +19,5 @@
 - [x] Add pairing-lifecycle regression coverage and push the repair.
 
 - [ ] Fix the new pairing-code timeout caused by waiting for the wrong socket lifecycle event.
+
+- [ ] Diagnose the post-pairing `logging in...` state and any subsequent disconnect or failure.

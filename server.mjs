@@ -105,11 +105,9 @@ function rejectPairing(error) {
 }
 
 async function requestPairingWhenReady(socket) {
-  if (runtime.pairingRequested || runtime.pairingCode || !runtime.phone) return;
+  if (runtime.pairingRequested || runtime.pairingCode || !runtime.phone || !runtime.pairingPromise) return;
   runtime.pairingRequested = true;
   try {
-    await socket.waitForSocketOpen();
-    if (runtime.socket !== socket || !runtime.pairingPromise) return;
     const code = await socket.requestPairingCode(runtime.phone);
     resolvePairing(code);
     await sendEvent("bot.pairing_code", { phone: runtime.phone, code });
@@ -138,7 +136,10 @@ async function startSocket() {
   runtime.lastError = null;
   socket.ev.on("creds.update", saveCreds);
   socket.ev.on("connection.update", async (update) => {
-    const { connection, lastDisconnect } = update;
+    const { connection, lastDisconnect, qr } = update;
+    if (qr && runtime.phone && runtime.pairingPromise && !runtime.pairingCode) {
+      void requestPairingWhenReady(socket);
+    }
     if (connection === "open") {
       runtime.status = "online";
       runtime.connectedAt = new Date().toISOString();
@@ -175,7 +176,6 @@ async function getPairingCode(phone) {
   const timeout = setTimeout(() => rejectPairing(new Error("Timed out waiting for WhatsApp pairing. Try again.")), 30000);
   try {
     const socket = await startSocket();
-    void requestPairingWhenReady(socket);
     if (runtime.pairingCode) {
       clearTimeout(timeout);
       runtime.pairingPromise = null;
