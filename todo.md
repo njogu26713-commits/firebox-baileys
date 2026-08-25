@@ -17,3 +17,5 @@
 - [x] Diagnose and fix `QR refs attempts ended` pairing-code rejection in the deployed service.
 - [x] Resolve the `Invalid or disabled bot key` Hub configuration mismatch and improve its diagnostics.
 - [x] Add pairing-lifecycle regression coverage and push the repair.
+
+- [ ] Fix the new pairing-code timeout caused by waiting for the wrong socket lifecycle event.

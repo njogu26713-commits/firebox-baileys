@@ -104,6 +104,32 @@ function rejectPairing(error) {
   pending?.reject(error);
 }
 
+async function requestPairingWhenReady(socket) {
+  if (runtime.pairingRequested || runtime.pairingCode || !runtime.phone) return;
+  runtime.pairingRequested = true;
+  const deadline = Date.now() + 20000;
+  let lastError;
+  try {
+    while (Date.now() < deadline && runtime.socket === socket) {
+      try {
+        const code = await socket.requestPairingCode(runtime.phone);
+        resolvePairing(code);
+        await sendEvent("bot.pairing_code", { phone: runtime.phone, code });
+        return;
+      } catch (error) {
+        lastError = error;
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+    }
+    throw lastError || new Error("Timed out waiting for the WhatsApp WebSocket to become ready.");
+  } catch (error) {
+    runtime.lastError = error.message;
+    rejectPairing(error);
+  } finally {
+    runtime.pairingRequested = false;
+  }
+}
+
 async function startSocket() {
   if (runtime.socket) return runtime.socket;
   await mkdir(AUTH_DIR, { recursive: true });
@@ -126,19 +152,6 @@ async function startSocket() {
       runtime.status = "online";
       runtime.connectedAt = new Date().toISOString();
       await sendEvent("bot.status", { status: "online" });
-      if (runtime.phone && runtime.pairingPromise && !runtime.pairingCode && !runtime.pairingRequested) {
-        runtime.pairingRequested = true;
-        try {
-          const code = await socket.requestPairingCode(runtime.phone);
-          resolvePairing(code);
-          await sendEvent("bot.pairing_code", { phone: runtime.phone, code });
-        } catch (error) {
-          runtime.lastError = error.message;
-          rejectPairing(error);
-        } finally {
-          runtime.pairingRequested = false;
-        }
-      }
     }
     if (connection === "close") {
       runtime.status = "offline";
@@ -170,7 +183,8 @@ async function getPairingCode(phone) {
   runtime.pairingPromise = { promise, resolve, reject };
   const timeout = setTimeout(() => rejectPairing(new Error("Timed out waiting for WhatsApp pairing. Try again.")), 30000);
   try {
-    await startSocket();
+    const socket = await startSocket();
+    void requestPairingWhenReady(socket);
     if (runtime.pairingCode) {
       clearTimeout(timeout);
       runtime.pairingPromise = null;
